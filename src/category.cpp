@@ -50,37 +50,32 @@ void CategoryManager::AddCategory(const string& categoryName){
         return;
     }
 
-    int totalPages = (categoryCount + pageSize - 1) / pageSize;
+    int totalPages = Utilities::calculateTotalPages(categoryCount, pageSize);
 
-    const int idWidth = 5;
-    const int nameWidth = 30;
+    const int columnCount = 2;
+    const string headers[columnCount] = {"ID", "Category Name"};
+    int columnWidths[columnCount];
 
-    const int tableWidth = idWidth+nameWidth;
+    Utilities::calculateColumnWidths(headers, columnCount, 10, columnWidths);
 
-        //Print Centered Title
-    cout << string(tableWidth+3, '=') << endl;
-    Utilities::printCenteredTitle("Categories", tableWidth+3);
-    cout << string(tableWidth+3, '=') << endl;
+    const int tableWidth = Utilities::calculateTableWidths(columnWidths, columnCount);
 
-    cout << "+" << string(idWidth, '-') << "+"
-         << string(nameWidth, '-') << "+" << endl;
+    //Print Centered Title
+    string tableTitle = "Categories";
+    Utilities::printTableTitle(tableTitle, tableWidth, columnCount);
 
-    cout << "| " << setw(idWidth - 1) << left << "ID"
-         << "| " << setw(nameWidth -1 ) << left << "Product Name"
-         << "|" << endl;
-
-    cout << "+" << string(idWidth, '-') << "+"
-         << string(nameWidth, '-') << "+" << endl;
+    Utilities::printTableHeader(headers, columnWidths, columnCount);
 
     // Display Product for currentPage
     for (int i = (currentPage - 1) * pageSize; i < currentPage * pageSize && i < categoryCount; i++) {
-        cout << "| " << setw(idWidth - 1) << left << ids[i]
-             << "| " << setw(nameWidth - 1) << left << names[i]
-             << "|" << endl;
+        const string rowData[columnCount] = {
+            to_string(ids[i]),
+            names[i],
+        };
+        Utilities::printTableRow(rowData, columnWidths, columnCount);
     }
 
-    cout << "+" << string(idWidth, '-') << "+"
-         << string(nameWidth, '-') << "+" << endl;
+    Utilities::printTableDivider(columnWidths, columnCount);
 
     cout << "Showing page " << currentPage << " of " << totalPages << "\n";
  }

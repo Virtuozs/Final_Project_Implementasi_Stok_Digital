@@ -64,53 +64,33 @@ void ProductManager::ViewProducts(int currentPage, int pageSize, CategoryManager
         Utilities::pressAnyKeyToContinue("No product available.");
         return;
     }
+
+    int totalPages = Utilities::calculateTotalPages(productCount, pageSize);
+
+    const int columnCount = 4;
+    const string headers[columnCount] = {"ID", "Product Name", "Category", "Stock"};
+    int columnWidths[columnCount];
     
-    int totalPages = (productCount + pageSize - 1) / pageSize;
+    Utilities::calculateColumnWidths(headers, columnCount, 10, columnWidths);
 
-    const int idWidth = 5;
-    const int nameWidth = 30;
-    const int categoryWidth =20;
-    const int stockWidth = 10;
+    const int tableWidth = Utilities::calculateTableWidths(columnWidths, columnCount);
 
-    const int tableWidth = idWidth+nameWidth+categoryWidth+stockWidth;
-    
-    //Print Centered Title
-    cout << string(tableWidth, '=') << endl;
-    Utilities::printCenteredTitle("Products", tableWidth);
-    cout << string(tableWidth, '=') << endl;
+    string tableTitle = "Products";
+    Utilities::printTableTitle(tableTitle, tableWidth, columnCount);
 
-    // Print Column Header
-    cout << "+" << string(idWidth, '-') << "+"
-         << string(nameWidth, '-') << "+"
-         << string(categoryWidth, '-') << "+"
-         << string(stockWidth, '-') << "+" << endl;
+    Utilities::printTableHeader(headers, columnWidths, columnCount);
 
-    cout << "| " << setw(idWidth - 1) << left << "ID"
-         << "| " << setw(nameWidth -1 ) << left << "Product Name"
-         << "| " << setw(categoryWidth - 1) << left << "Category"
-         << "| " << setw(stockWidth - 1) << left << "Stock"
-         << "|" << endl;
-
-    cout << "+" << string(idWidth, '-') << "+"
-         << string(nameWidth, '-') << "+"
-         << string(categoryWidth, '-') << "+"
-         << string(stockWidth, '-') << "+" << endl;
-    
-
-    // Display Product for currentPage
     for (int i = (currentPage - 1) * pageSize; i < currentPage * pageSize && i < productCount; i++) {
-        string categoryName = categoryManager.GetCategoryName(categoryIds[i]);
-        cout << "| " << setw(idWidth - 1) << left << ids[i]
-             << "| " << setw(nameWidth - 1) << left << names[i]
-             << "| " << setw(categoryWidth - 1) << left << categoryName
-             << "| " << setw(stockWidth - 1) << left << stocks[i]
-             << "|" << endl;
+        const string rowData[columnCount] = {
+            to_string(ids[i]),
+            names[i],
+            categoryManager.GetCategoryName(categoryIds[i]),
+            to_string(stocks[i])
+        };
+        Utilities::printTableRow(rowData, columnWidths, columnCount);
     }
 
-    cout << "+" << string(idWidth, '-') << "+"
-         << string(nameWidth, '-') << "+"
-         << string(categoryWidth, '-') << "+"
-         << string(stockWidth, '-') << "+" << endl;
+    Utilities::printTableDivider(columnWidths, columnCount);
 
     cout << "Showing page " << currentPage << " of " << totalPages << "\n";
 }
@@ -130,52 +110,37 @@ int ProductManager::ViewProductsByCategory(int categoryId, int currentPage, int 
         return 0;
     }
 
-    int totalPages = (filteredProductCount + pageSize - 1) / pageSize;
+    
+    int totalPages = Utilities::calculateTotalPages(filteredProductCount, pageSize);
 
-    const int idWidth = 5;
-    const int nameWidth = 30;
-    const int stockWidth = 10;
+    const int columnCount = 4;
+    const string headers[columnCount] = {"ID", "Product Name", "Category", "Stock"};
+    int columnWidths[columnCount];
 
-    const int tableWidth = idWidth + nameWidth + stockWidth;
+    Utilities::calculateColumnWidths(headers, columnCount, 10, columnWidths);
+
+    const int tableWidth = Utilities::calculateTableWidths(columnWidths, columnCount);
 
     string categoryName = categoryManager.GetCategoryName(categoryId);
 
-    // Print Title
-    cout << string(tableWidth, '=') << endl;
-    Utilities::printCenteredTitle("Products in Category "+categoryName, tableWidth);
-    cout << string(tableWidth, '=') << endl;
+    string tableTitle = "Products in Category "+categoryName;
+    Utilities::printTableTitle(tableTitle, tableWidth, columnCount);
 
-    // Print Column Header
-    cout << "+" << string(idWidth, '-') << "+"
-         << string(nameWidth, '-') << "+"
-         << string(stockWidth, '-') << "+" << endl;
+    Utilities::printTableHeader(headers, columnWidths, columnCount);
 
-    cout << "| " << setw(idWidth - 1) << left << "ID"
-        << "| " << setw(nameWidth - 1) << left << "Product Name"
-        << "| " << setw(stockWidth - 1) << left << "Stock"
-        << "|" << endl;
-
-    cout << "+" << string(idWidth, '-') << "+"
-        << string(nameWidth, '-') << "+"
-        << string(stockWidth, '-') << "+" << endl;
-
-    // Display products for the current page
-    int productCountOnPage = 0;
-    for (int i = 0; i < productCount; i++) {
-        if (categoryIds[i] == categoryId) {
-            if (productCountOnPage >= (currentPage - 1) * pageSize && productCountOnPage < currentPage * pageSize) {
-                cout << "| " << setw(idWidth - 1) << left << ids[i]
-                     << "| " << setw(nameWidth - 1) << left << names[i]
-                     << "| " << setw(stockWidth - 1) << left << stocks[i]
-                     << "|" << endl;
-            }
-            productCountOnPage++;
+    for (int i = (currentPage - 1) * pageSize; i < currentPage * pageSize && i < productCount; i++) {
+        if(categoryIds[i] == categoryId){
+            const string rowData[columnCount] = {
+                to_string(ids[i]),
+                names[i],
+                categoryManager.GetCategoryName(categoryIds[i]),
+                to_string(stocks[i])
+            };
+            Utilities::printTableRow(rowData, columnWidths, columnCount);
         }
     }
 
-    cout << "+" << string(idWidth, '-') << "+"
-         << string(nameWidth, '-') << "+"
-         << string(stockWidth, '-') << "+" << endl;
+    Utilities::printTableDivider(columnWidths, columnCount);
 
     cout << "Showing page " << currentPage << " of " << totalPages << "\n";
     return filteredProductCount;
@@ -206,4 +171,22 @@ void ProductManager::UpdateStock(int productId, int stockChanges) {
     }
     Utilities::clearScreen();
     Utilities::pressAnyKeyToContinue("Product ID " + to_string(productId) + " not found!");
+}
+
+bool ProductManager::ProductExists(int productID){
+    for(int i=0;i<productCount;i++){
+        if(ids[i] == productID){
+            return true;
+        }
+    }
+    return false;
+}
+
+string ProductManager::GetProductName(int productID){
+    for (int i = 0; i < productCount; ++i) {
+        if (ids[i] == productID) {
+            return names[i];
+        }
+    }
+    throw std::out_of_range("Category ID is out of range");
 }

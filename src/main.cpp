@@ -56,9 +56,7 @@ void DisplayAdminMenu(CategoryManager &categoryManager, ProductManager &productM
     while (running) {
         char choice;
         //Print Centered Title
-        cout << string(20, '=') << endl;
         Utilities::printCenteredTitle("Admin Menu", 20);
-        cout << string(20, '=') << endl;
         cout << "1. Add Category" <<endl;
         cout << "2. View Categories" << endl;
         cout << "3. Add Product" << endl;
@@ -72,9 +70,7 @@ void DisplayAdminMenu(CategoryManager &categoryManager, ProductManager &productM
             Utilities::clearScreen();
             
             //Print Centered Title
-            cout << string(20, '=') << endl;
-            Utilities::printCenteredTitle("Adding Category", 20);
-            cout << string(20, '=') << endl;
+            Utilities::printCenteredTitle("Adding Category", 30);
 
             string categoryName;
             cout << "Enter category name: ";
@@ -117,9 +113,12 @@ void DisplayAdminMenu(CategoryManager &categoryManager, ProductManager &productM
             break;
         }
         case '3': {
+            Utilities::clearScreen();
             string productName;
             int categoryId;
             int stockThreshold;
+            
+            Utilities::printCenteredTitle("Adding Product", 40);
             cout << "\nEnter product name: ";
             cin.ignore();
             getline(cin, productName);
@@ -184,12 +183,13 @@ void DisplayStaffMenu(CategoryManager &categoryManager, ProductManager &productM
     while (running)
     {
         char choice;
-        cout << endl <<"Staff Menu: " << endl;
+        Utilities::printCenteredTitle("Staff Menu", 30);
         cout << "1. Monitor Inventory (Per Product)" << endl;
         cout << "2. Monitor Inventory (Per Category)" << endl;
         cout << "3. Record Stock In" << endl;
         cout << "4. Record Stock Out" << endl;
-        cout << "5. Exit" << endl;
+        cout << "5. Bulk Update Products" << endl;
+        cout << "6. Exit" << endl;
         cout << "Choose function: ";
 
         cin >> choice;
@@ -338,6 +338,8 @@ void DisplayStaffMenu(CategoryManager &categoryManager, ProductManager &productM
                     break;      
                 }
             } while (true);
+            Utilities::clearScreen();
+            cout << "Updating " << productManager.GetProductName(productId) << endl;
             cout << "Enter quantity to add: ";
             cin >> stockChange;
             productManager.UpdateStock(productId, stockChange);
@@ -370,6 +372,10 @@ void DisplayStaffMenu(CategoryManager &categoryManager, ProductManager &productM
                 } else if (choice == 'q') {
                     break;
                 } else {
+                    if (!isdigit(choice)) {
+                        Utilities::pressAnyKeyToContinue("Invalid input. Please enter a valid number.");
+                        continue;
+                    }
                     cin.putback(choice);
                     cin >> productId;  
                     if(cin.fail()) {
@@ -387,6 +393,144 @@ void DisplayStaffMenu(CategoryManager &categoryManager, ProductManager &productM
             break;
         }
         case '5': {
+            int productIDs[productManager.MAX_PRODUCTS];
+            //int stockChanges[productManager.MAX_PRODUCTS];
+            int productIDCount = 0;
+            //int stockChangeCount = 1;
+            bool noInputYet = true;
+            bool updateState = false;
+            do{
+                Utilities::clearScreen();
+                productManager.ViewProducts(currentProductPage, pageSize, categoryManager);
+
+                cout << "Navigate (n: next, p: previous, q: quit, u: update)" << endl;
+                cout << "Below is the product update queue: " << endl;
+                for(int i=0;i<productIDCount;i++){
+                    if (noInputYet) {
+                        cout << " ";
+                    } else {
+                        cout << i+1 << ". "<< productManager.GetProductName(productIDs[i]) << endl;
+                    }
+                }
+                cout << "\nSelect a product ID to include in update queue: ";
+                cin >> choice;
+                if (choice == 'n') {
+                    if (currentProductPage < (productManager.productCount + pageSize - 1) / pageSize) {
+                        currentProductPage++;
+                    } else {
+                        Utilities::pressAnyKeyToContinue("You are already on the last page.");
+                    }
+                } else if (choice == 'p') {
+                    if (currentProductPage > 1) {
+                        currentProductPage--;
+                    } else {
+                        Utilities::pressAnyKeyToContinue("You are already on the first page.");
+                    }
+                } else if (choice == 'q') {
+                    break;
+                } else if (choice == 'u') {
+                    if(productIDCount<1){
+                        Utilities::pressAnyKeyToContinue("There are no product inside update queue");
+                        continue;
+                    }else{
+                        updateState=true;
+                        break;
+                    }
+                }
+                else{
+                    cin.putback(choice);
+                    int temporaryProductID;
+                    cin >> temporaryProductID;
+
+                    bool isExist = productManager.ProductExists(temporaryProductID);
+                    bool isDuplicate = false;
+
+                    if (!noInputYet) {
+                        for (int i = 0; i < productIDCount; i++) {
+                            if (productIDs[i] == temporaryProductID) {
+                                isDuplicate = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isDuplicate) {
+                        Utilities::pressAnyKeyToContinue("Product already exists in Update Queue.");
+                        continue;
+                    }
+
+                    if(isExist){
+                        productIDs[productIDCount] = temporaryProductID;
+                        noInputYet=false;
+                    } 
+                    else{
+                        // handling invalid user input string or char
+                        if(cin.fail()) {
+                            cin.clear();
+                            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                            Utilities::pressAnyKeyToContinue("Invalid Product ID. Try again.");
+                            continue;
+                        }else{
+                            Utilities::pressAnyKeyToContinue("Invalid Product ID. Try again.");
+                            continue;
+                        }
+                    }
+                    if(!noInputYet){
+                        productIDCount++;
+                    }
+                }
+            }while (true);
+            if(updateState){
+                for(int i=0;i<productIDCount;i++){
+                    Utilities::clearScreen();
+                    string productName = productManager.GetProductName(productIDs[i]);
+                    Utilities::printCenteredTitle("Updating product "+productName+" in queue", 40);
+
+                    int updateType;
+                    while (true) {
+                        cout << "1. Stock In" << endl;
+                        cout << "2. Stock Out" << endl;
+                        cout << "Choose the update type: ";
+                        cin >> updateType;
+
+                        if (cin.fail() || (updateType != 1 && updateType != 2)) {
+                            cin.clear();
+                            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                            cout << "Invalid input. Please enter 1 for Stock In or 2 for Stock Out." << endl;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    int stockChange;
+                    while (true) {
+                        if (updateType == 1) {
+                            cout << "Enter quantity to add: ";
+                        } else {
+                            cout << "Enter quantity to subtract: ";
+                        }
+                        cin >> stockChange;
+
+                        if (cin.fail() || stockChange <= 0) {
+                            cin.clear();
+                            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                            cout << "Invalid input. Please enter a positive integer." << endl;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if(updateType==1){
+                        productManager.UpdateStock(productIDs[i],stockChange);
+                    }else{
+                        productManager.UpdateStock(productIDs[i],-stockChange);
+                    }
+                }
+            }
+            Utilities::clearScreen();
+            break;
+        }
+        case '6': {
             Utilities::clearScreen();
             running = false;
             break;

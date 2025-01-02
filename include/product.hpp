@@ -16,6 +16,8 @@ class ProductManager {
         void ViewProducts(int currentPage, int pageSize, CategoryManager& categoryManager);
         int ViewProductsByCategory(int categoryId, int currentPage, int pageSize, CategoryManager& categoryManager);
         void UpdateStock(int productId, int stockChange);
+        bool ProductExists(int productID);
+        string GetProductName(int productID);
 
     private:
         //Add more field
